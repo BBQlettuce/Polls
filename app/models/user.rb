@@ -12,34 +12,29 @@ class User < ActiveRecord::Base
     foreign_key: :user_id,
     primary_key: :id
 
-  def completed_polls
+  def user_polls
     Poll
       .joins(questions: :answer_choices)
       .joins(user_responses_subquery)
       .group("polls.id")
-      .having("COUNT(DISTINCT questions.id) = COUNT(user_responses.id)")
       .select("polls.*")
-
-      # .joins('LEFT OUTER JOIN responses ON responses.answer_choice_id = answer_choices.id' )
-      # .where('responses.user_id = ? or responses.user_id IS NULL', id)
   end
 
   def user_responses_subquery
-    'LEFT OUTER JOIN ' +
-      '(SELECT * ' +
-        'FROM responses ' +
-        'WHERE responses.user_id = ' + id.to_s + ') ' +
-        'AS user_responses ' +
-        'ON user_responses.answer_choice_id = answer_choices.id'
+    <<-SQL
+    LEFT OUTER JOIN
+      ( #{Response.where(user_id: id).to_sql} )
+        AS user_responses
+        ON user_responses.answer_choice_id = answer_choices.id
+    SQL
+  end
+
+  def completed_polls
+    user_polls.having("COUNT(DISTINCT questions.id) = COUNT(user_responses.id)")
   end
 
   def uncompleted_polls
-    Poll
-      .joins(questions: :answer_choices)
-      .joins(user_responses_subquery)
-      .group("polls.id")
-      .having("COUNT(DISTINCT questions.id) != COUNT(user_responses.id)")
-      .select("polls.*")
+    user_polls.having("COUNT(DISTINCT questions.id) != COUNT(user_responses.id)")
   end
 
 end
