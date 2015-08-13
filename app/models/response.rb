@@ -12,4 +12,14 @@ class Response < ActiveRecord::Base
     class_name: "AnswerChoice",
     foreign_key: :answer_choice_id,
     primary_key: :id
+
+  has_one :question,
+    through: :answer_choice,
+    source: :question
+
+  def sibling_responses
+    question.responses.where("responses.id != ?", id)
+  end
+
+
 end
