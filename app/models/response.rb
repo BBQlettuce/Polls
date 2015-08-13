@@ -3,6 +3,7 @@ class Response < ActiveRecord::Base
   validates :user_id, :presence => true
   validates :answer_choice_id, :presence => true
   validate :respondent_has_not_already_answered_question
+  validate :respondent_is_not_poll_author
 
   belongs_to :respondent,
     class_name: "User",
@@ -32,8 +33,10 @@ class Response < ActiveRecord::Base
     end
   end
 
-  # def respondent_is_not_poll_author
-  #   answer_choice
-  # end
+  def respondent_is_not_poll_author
+    if answer_choice.question.poll.author_id == respondent.id
+      errors[:author_poll] << "author cannot respond to own poll"
+    end
+  end
 
 end
