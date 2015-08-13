@@ -15,20 +15,30 @@ class User < ActiveRecord::Base
   def completed_polls
     Poll
       .joins(questions: :answer_choices)
-      .joins('LEFT OUTER JOIN responses ON responses.answer_choice_id = answer_choices.id' )
-      .where('responses.user_id = ? or responses.user_id IS NULL', id)
+      .joins(user_responses_subquery)
       .group("polls.id")
-      .having("COUNT(DISTINCT questions.id) = COUNT(responses.id)")
+      .having("COUNT(DISTINCT questions.id) = COUNT(user_responses.id)")
       .select("polls.*")
+
+      # .joins('LEFT OUTER JOIN responses ON responses.answer_choice_id = answer_choices.id' )
+      # .where('responses.user_id = ? or responses.user_id IS NULL', id)
+  end
+
+  def user_responses_subquery
+    'LEFT OUTER JOIN ' +
+      '(SELECT * ' +
+        'FROM responses ' +
+        'WHERE responses.user_id = ' + id.to_s + ') ' +
+        'AS user_responses ' +
+        'ON user_responses.answer_choice_id = answer_choices.id'
   end
 
   def uncompleted_polls
     Poll
       .joins(questions: :answer_choices)
-      .joins('LEFT OUTER JOIN responses ON responses.answer_choice_id = answer_choices.id' )
-      .where('responses.user_id = ? or responses.user_id IS NULL', id)
+      .joins(user_responses_subquery)
       .group("polls.id")
-      .having("COUNT(DISTINCT questions.id) != COUNT(responses.id)")
+      .having("COUNT(DISTINCT questions.id) != COUNT(user_responses.id)")
       .select("polls.*")
   end
 
@@ -37,22 +47,27 @@ end
 # # +
 # # # #
 # SELECT
-#   polls.* -- polls.id p_id, questions.id q_id, answer_choices.id a_id, responses.id r_id, responses.user_id u_id
+#   polls.* --polls.id p_id, questions.id q_id, answer_choices.id a_id, user_responses.id r_id, user_responses.user_id u_id
 # FROM
 #   polls
 # LEFT OUTER JOIN
 #   questions ON polls.id = questions.poll_id
 # LEFT OUTER JOIN
-#   answer_choices ON answer_choices.question_id = questions.id
+# #   answer_choices ON answer_choices.question_id = questions.id
 # LEFT OUTER JOIN
-#   responses ON responses.answer_choice_id = answer_choices.id
-# WHERE
-#   responses.user_id = 2 OR responses.user_id IS NULL
-# GROUP BY
+#   (SELECT
+#     *
+#   FROM
+#     responses
+#   WHERE
+#     responses.user_id = 3 ) AS user_responses
+# ON
+#   user_responses.answer_choice_id = answer_choices.id
+# # GROUP BY
 #   polls.id
 # HAVING
-#   COUNT(DISTINCT questions.id) = COUNT(responses.id)
-#   #
+#   COUNT(DISTINCT questions.id) != COUNT(user_responses.id)
+# #   #
 
 
 # SELECT
