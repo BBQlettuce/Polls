@@ -1,5 +1,7 @@
 class Question < ActiveRecord::Base
 
+  validates :poll_id, :presence => true
+
   belongs_to :poll,
     class_name: "Poll",
     foreign_key: :poll_id,
@@ -9,5 +11,5 @@ class Question < ActiveRecord::Base
     class_name: "AnswerChoice",
     foreign_key: :question_id,
     primary_key: :id
-    
+
 end
