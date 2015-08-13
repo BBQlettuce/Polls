@@ -35,8 +35,33 @@ class Response < ActiveRecord::Base
 
   def respondent_is_not_poll_author
     if answer_choice.question.poll.author_id == respondent.id
+
+    # root_poll = Poll
+    #   .joins(questions: { answer_choices: :responses } )
+    #   .where("responses.id = ?", id)
+    #   .select("polls.*")
+    # 
+    # if root_poll.first.author_id == respondent.id
       errors[:author_poll] << "author cannot respond to own poll"
     end
+
   end
 
+
 end
+
+
+# <<-SQL
+#   SELECT
+#     polls.author_id
+#   FROM
+#     polls
+#   JOIN
+#     questions ON polls.id = questions.poll_id
+#   JOIN
+#     answer_choices ON questions.id = answer_choices.question_id
+#   JOIN
+#     responses ON answer_choices.id = responses.answer_choice_id
+#   WHERE
+#     responses.id = ?
+# SQL
