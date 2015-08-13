@@ -16,23 +16,23 @@ class Question < ActiveRecord::Base
     through: :answer_choices,
     source: :responses
 
-  def results_n_plus_one
-    output = {}
-    answer_choices.each do |answer_choice|
-      output[answer_choice.text] = answer_choice.responses.count
-    end
-    output
-  end
-
-  def results_two_database_queries
-    poll_results = answer_choices.includes(:responses)
-
-    output = {}
-    poll_results.each do |poll_result|
-      output[poll_result.text] = poll_result.responses.length
-    end
-    output
-  end
+  # def results_n_plus_one
+  #   output = {}
+  #   answer_choices.each do |answer_choice|
+  #     output[answer_choice.text] = answer_choice.responses.count
+  #   end
+  #   output
+  # end
+  #
+  # def results_two_database_queries
+  #   poll_results = answer_choices.includes(:responses)
+  #
+  #   output = {}
+  #   poll_results.each do |poll_result|
+  #     output[poll_result.text] = poll_result.responses.length
+  #   end
+  #   output
+  # end
 
   def results
     poll_results = answer_choices
@@ -47,14 +47,4 @@ class Question < ActiveRecord::Base
     output
   end
 
-  # SELECT
-  #   answer_choices.*, COUNT(responses.id) AS num_responses
-  # FROM
-  #   answer_choices
-  # LEFT OUTER JOIN
-  #   responses ON answer_choices.id = responses.answer_choice_id
-  # WHERE
-  #   answer_choices.question_id = 1
-  # GROUP BY
-  #   answer_choices.id
 end
